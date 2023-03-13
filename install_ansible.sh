@@ -20,6 +20,6 @@ echo "Running apt-get to install ansible, you may be prompted for sudo access pa
 
 sudo apt-get install -y ansible acl
 sudo rm -rf /etc/ansible
-sudo ln -s /home/$username/myproject1/ansible /etc/ansible
+sudo ln -s /home/$username/project3/ansible /etc/ansible
 sudo chown $username /etc/ansible
 sudo chgrp $username /etc/ansible
