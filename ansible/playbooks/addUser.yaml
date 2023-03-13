@@ -1,0 +1,16 @@
+---
+- hosts: fileserver
+  gather_facts: no
+  vars:
+    username: ""
+    password: ""
+  tasks:
+    - name: Create user "{{ username }}"
+      become: true
+      user:
+        home: "{{ defaultHome }}"
+        groups: "{{ defaultGroup }}"
+        name: "{{ username }}"
+        password: "{{ password | password_hash('sha512') }}"
+        shell: "{{ defaultShell }}"
+        state: present

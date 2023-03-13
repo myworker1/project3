@@ -1,0 +1,10 @@
+defaultGroup: sftp_users
+defaultHome: /sftp_users
+defaultSharedSubdir: "{{defaultHome}}/ftp"
+defaultShell: /usr/sbin/nologin
+users:
+  - name: sftpuser1
+    password: sftpuser1
+  - name: sftpuser2
+    password: sftpuser2
+webShare: /webservice

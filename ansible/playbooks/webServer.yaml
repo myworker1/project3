@@ -1,0 +1,27 @@
+---
+- name: create the web server
+  hosts: fileserver
+  become: true
+
+  tasks:
+
+    - name: Install Nginx package
+      apt:
+        name: nginx
+        state: present
+
+    - name: Update nginx configuration file
+      template:
+        dest: /etc/nginx/nginx.conf
+        group: root
+        owner: root
+        mode: '0644'
+        src: nginx.conf.j2
+      notify: Restart nginx service
+
+  handlers:
+
+    - name: Restart nginx service
+      service:
+        name: nginx
+        state: restarted

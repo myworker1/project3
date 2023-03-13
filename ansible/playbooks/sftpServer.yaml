@@ -1,0 +1,71 @@
+---
+- name: create the sftp server
+  hosts: fileserver
+  become: true
+
+  vars:
+    sshd_config: |
+      Subsystem sftp  internal-sftp
+      Match Group {{ defaultGroup }}
+        ChrootDirectory %h
+        ForceCommand internal-sftp
+        X11Forwarding no
+        AllowTcpForwarding no
+        ForceCommand internal-sftp
+
+  tasks:
+
+    - name: "Create {{ defaultGroup }} group"
+      group:
+        name: "{{ defaultGroup }}"
+        state: present
+
+    - name: "Create the home directory {{ defaultHome }} that all users will get chrooted/locked into"
+      file:
+        directory_mode: "0755"
+        group: "{{ defaultGroup }}"
+        owner: root
+        path: "{{ defaultHome }}"
+        state: directory
+
+    - name: "Create the shared {{ defaultSharedSubdir }} directory that users can read/write/delete files in"
+      file:
+        directory_mode: "0755"
+        group: "{{ defaultGroup }}"
+        mode: "774"
+        owner: root
+        path: "{{ defaultSharedSubdir }}"
+        recurse: yes
+        state: directory
+
+    - name: Set ACL permissions for group
+      shell: setfacl -d -m g:"{{ defaultGroup }}":rwx "{{ defaultSharedSubdir }}"
+
+    - name: Add user to SFTP group
+      become: true
+      user:
+        name: "{{ user.name }}"
+        group: "{{ defaultGroup }}"
+        home: "{{ defaultHome }}"
+        password: "{{ user.password | password_hash('sha512') }}"
+        shell: "{{ defaultShell }}"
+        system: yes
+      loop_control:
+        loop_var: user
+      with_items:
+        - "{{ users }}"
+
+    - name: Update sshd_config to use internal sftp subsystem
+      replace:
+          path: /etc/ssh/sshd_config
+          regexp: '^.*/usr/lib/openssh/sftp-server*$'   #needs more testing with default env
+          replace: "{{ sshd_config }}"
+      notify:
+        - Restart ssh service
+
+  handlers:
+
+    - name: Restart ssh service
+      service:
+        name: ssh
+        state: restarted

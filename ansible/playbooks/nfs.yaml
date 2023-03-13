@@ -1,0 +1,41 @@
+---
+- name: Install NFS server and client
+  hosts: fileserver
+  become: true
+  
+  tasks:
+  - name: Install NFS server and client packages
+    apt:
+      name:
+        - nfs-kernel-server
+        - nfs-common
+      
+  - name: Configure NFS exports
+    lineinfile:
+      create: yes
+      line: "{{ defaultSharedSubdir }} localhost(ro,all_squash,anonuid=0,anongid=0)"
+      path: /etc/exports
+      state: present
+
+  - name: Restart NFS server
+    service:
+      name: nfs-kernel-server
+      state: restarted
+
+- name: Mount NFS shared directory on client
+  hosts: localhost
+  become: true
+  
+  tasks:
+  - name: Create mount point
+    file:
+      path: "{{ webShare }}"
+      state: directory
+      
+  - name: Mount shared directory
+    mount:
+      fstype: nfs
+      opts: "ro"
+      path: "{{ webShare }}"
+      src: "localhost:{{ defaultSharedSubdir }}"
+      state: mounted
